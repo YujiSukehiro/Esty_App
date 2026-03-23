@@ -37,6 +37,7 @@ export default function ReportsView() {
   const dailyLogs = useLiveQuery(() => db.dailyLogs.toArray());
   const sessions = useLiveQuery(() => db.sessions.toArray());
   const serviceCatalog = useLiveQuery(() => db.serviceCatalog.toArray());
+  const materialCatalog = useLiveQuery(() => db.materialCatalog.toArray());
   const settings = useLiveQuery(() => db.settings.toArray());
 
   const {
@@ -331,7 +332,7 @@ export default function ReportsView() {
       effectivePrevMonth: effectivePrevMonth
     };
 
-  }, [dailyLogs, sessions, serviceCatalog, settings, activeTab, selectedPrevMonth]);
+  }, [dailyLogs, sessions, serviceCatalog, materialCatalog, settings, activeTab, selectedPrevMonth]);
 
   const chartOptions = {
     responsive: true,
