@@ -1,0 +1,42 @@
+# Esthetician PWA Development Sessions
+
+- [ ] **Session 1: Project Initialization & PWA Infrastructure**
+  - [ ] Scaffold project with Vue.js/React.js and Vite
+  - [ ] Configure `vite-plugin-pwa` for offline capabilities and Service Worker
+  - [ ] Set up Web App Manifest (App icon, theme colors, display standalone)
+  - [ ] Ensure "Add to Home Screen" prompts function correctly
+- [ ] **Session 2: Local Database Schema & Setup (Dexie.js)**
+  - [ ] Initialize Dexie.js and define database schemas
+  - [ ] Create `Settings`, `ServiceCatalog`, `MaterialCatalog`, `Inventory`, `DailyLogs`, and `Sessions` tables
+  - [ ] Implement robust error handling for IndexedDB operations
+- [ ] **Session 3: Configuration & Settings Dashboards**
+  - [ ] Build Financial Compensation Setup (Commission vs Booth Rent)
+  - [ ] Build Service List Builder (Standard/Member pricing, Linked Materials)
+  - [ ] Build Inventory Manager (Fractional tracking, low stock alerts)
+- [ ] **Session 4: Main Operational UI & Calendar Matrix**
+  - [ ] Integrate lightweight calendar (`Vanilla-Calendar Pro` or similar)
+  - [ ] Create the high-velocity "Daily Tally" view container
+  - [ ] Implement the "Worked Today" master toggle and Hours Input Stepper
+- [ ] **Session 5: Daily Tally & Service Logging**
+  - [ ] Build Service Quick-Add Grid
+  - [ ] Implement Session Ledger (List of performed services)
+  - [ ] Add Modifiers: "Apply Member Rate", "Mark as Free", "Add Accident Modifier"
+  - [ ] Implement Gratuity (Cash/Card) and Payment Method modals
+  - [ ] Handle variable/time-based pricing logic
+- [ ] **Session 6: Financial & Fractional Inventory Logic**
+  - [ ] Implement Commission vs. Booth Rent deduction algorithms
+  - [ ] Build the Stacking (Bill of Materials) background processor
+  - [ ] Calculate and track double-precision fractional inventory deductions
+- [ ] **Session 7: Immutable Backup Strategy**
+  - [ ] Implement JSON Export Protocol (Serialize Dexie.js to JSON string)
+  - [ ] Build structured Blob download mechanism for local backups
+  - [ ] Create "Import Backup" reconstitution feature
+- [ ] **Session 8: Reports Dashboard & Data Visualization**
+  - [ ] Integrate lightweight charting (e.g., `Chart.js`)
+  - [ ] Build Top-Level KPI Scorecard (Gross, Net, Sessions, Hourly Yield)
+  - [ ] Create Revenue vs. Expenses Trend charts
+  - [ ] Render Service Distribution and Inventory Burn Rate visualizations
+- [ ] **Session 9: Final Polish & Comprehensive Testing**
+  - [ ] Refine UX/UI for large touch targets and high-contrast legibility
+  - [ ] Perform offline stress tests and cache validation
+  - [ ] Simulate catastrophic edge cases to ensure data integrity
