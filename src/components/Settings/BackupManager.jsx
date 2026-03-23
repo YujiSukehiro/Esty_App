@@ -44,8 +44,11 @@ export default function BackupManager() {
       const data = JSON.parse(text);
 
       await db.transaction('rw', db.tables, async () => {
-        for (const table of db.tables) {
-          await table.clear();
+        const importKeys = Object.keys(data);
+        for (const tableName of importKeys) {
+          if (db[tableName]) {
+            await db[tableName].clear();
+          }
         }
         for (const tableName of Object.keys(data)) {
           if (db[tableName]) {
