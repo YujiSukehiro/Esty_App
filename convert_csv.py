@@ -131,6 +131,15 @@ with open('database.csv', 'r') as f:
                 is_free = True
                 custom_rev = 0
             
+        # Standardize Tip Method
+        raw_tip_method = row['Tip Method'].strip().lower()
+        if 'cash' in raw_tip_method:
+            tip_type = 'Cash'
+        elif not raw_tip_method:
+            tip_type = 'Cash' # Default to cash if no method provided, given standard business practice
+        else:
+            tip_type = 'Card'
+
         session = {
             "id": session_id_counter,
             "dateStr": dateStr,
@@ -140,7 +149,7 @@ with open('database.csv', 'r') as f:
             "isFree": is_free,
             "hasAccident": False,
             "tipAmount": tip_amt,
-            "tipType": row['Tip Method'].strip() if row['Tip Method'].strip() else 'Cash',
+            "tipType": tip_type,
             "customRevenue": custom_rev,
             "clientName": row['Client Name'].strip(),
             "details": f"{row['Service']} {row.get('Lash Type', '')} {row['Details']}".strip(),
