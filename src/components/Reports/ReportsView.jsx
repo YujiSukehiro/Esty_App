@@ -123,6 +123,7 @@ export default function ReportsView() {
     let bizShare = 0;
     let tips = 0;
     let cashT = 0;
+    let cardT = 0; // Fix: Re-add cardT that was overwritten
     let cogs = 0;
 
     // For MoM specifically, we need to bucket into current vs previous
