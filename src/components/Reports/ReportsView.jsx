@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db';
 
@@ -31,210 +31,336 @@ ChartJS.register(
 );
 
 export default function ReportsView() {
+  const [activeTab, setActiveTab] = useState('Current Month'); // Current Month, Month-over-Month, YTD, Previous Years
+  
   const dailyLogs = useLiveQuery(() => db.dailyLogs.toArray());
   const sessions = useLiveQuery(() => db.sessions.toArray());
   const serviceCatalog = useLiveQuery(() => db.serviceCatalog.toArray());
+  const settings = useLiveQuery(() => db.settings.toArray());
 
   const {
     totalGross,
     totalNet,
-    totalHours,
+    businessShare,
+    totalTips,
     totalSessions,
-    hourlyYield,
-    recentDays,
-    serviceDistribution
+    serviceDistribution,
+    lineChartTemplate,
+    barChartTemplate,
+    previousMoM
   } = useMemo(() => {
-    if (!dailyLogs || !sessions) return { totalGross: 0, totalNet: 0, totalHours: 0, totalSessions: 0, hourlyYield: 0, recentDays: [] };
+    if (!dailyLogs || !sessions || !settings) return {
+      totalGross: 0, totalNet: 0, businessShare: 0, totalTips: 0, totalSessions: 0,
+      serviceDistribution: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null
+    };
 
-    // We want trailing 30 days
+    const finModel = settings.find(s => s.key === 'financialModel')?.value || 'Commission';
+    const commPct = settings.find(s => s.key === 'commissionPercentage')?.value || 50;
+
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-    const recentLogs = dailyLogs.filter(log => new Date(log.dateStr) >= thirtyDaysAgo);
-    
-    // Sort by date ascending for charts
-    recentLogs.sort((a, b) => new Date(a.dateStr) - new Date(b.dateStr));
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
 
+    // Helper to check boundaries
+    const filterData = (dateStr) => {
+      const d = new Date(dateStr);
+      if (activeTab === 'Current Month') {
+        return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      } else if (activeTab === 'YTD') {
+        return d.getFullYear() === currentYear;
+      } else if (activeTab === 'Previous Years') {
+        return d.getFullYear() < currentYear;
+      } else if (activeTab === 'Month-over-Month') { // Show current month vs last month
+        return (d.getFullYear() === currentYear && d.getMonth() === currentMonth) || 
+               (d.getFullYear() === currentYear && d.getMonth() === currentMonth - 1) ||
+               (d.getFullYear() === currentYear - 1 && currentMonth === 0 && d.getMonth() === 11);
+      }
+      return true;
+    };
+
+    const relevantSessions = sessions.filter(s => filterData(s.dateStr));
+    const relevantLogs = dailyLogs.filter(l => filterData(l.dateStr));
+
+    // Calculate exact splits aggregating by session
     let gross = 0;
-    let net = 0;
-    let hours = 0;
-    let burnRate = 0;
+    let net = 0; // Esthetician take home
+    let bizShare = 0;
+    let tips = 0;
 
-    recentLogs.forEach(log => {
-      gross += (log.totalGrossRev || 0);
-      net += (log.netProfit || 0);
-      hours += (log.totalHours || 0);
-      // Approximation of burn rate: Gross - Net is NOT accurate due to Booth Rent or Commission logic.
-      // Wait, let's track burnRate correctly below.
-    });
+    // For MoM specifically, we need to bucket into current vs previous
+    let currentMoMGross = 0;
+    let prevMoMGross = 0;
 
-    const relevantSessions = sessions.filter(s => new Date(s.dateStr) >= thirtyDaysAgo);
-    
-    // Calculate Service Distribution and Burn Rate
-    const serviceDistribution = {};
-    
+    const distribution = {};
+
     relevantSessions.forEach(s => {
       const svc = serviceCatalog?.find(cat => cat.id === s.serviceId);
-      if (svc) {
-        serviceDistribution[svc.serviceName] = (serviceDistribution[svc.serviceName] || 0) + 1;
-        // Material costs approximation
-        if (svc.linkedMaterials) {
-          // This requires a more complex db query normally,
-          // but for UI approximation let's just use totalGrossRev difference from net if we can.
-          // Actually, we'll need to fetch materials properly, or just leave Burn Rate to be determined.
-        }
+      const sName = svc ? svc.serviceName : 'Custom Service';
+      distribution[sName] = (distribution[sName] || 0) + 1;
+
+      const rev = s.customRevenue || 0;
+      const tip = s.tipAmount || 0;
+      gross += rev;
+      tips += tip;
+
+      let estyCut = 0;
+      let bizCut = 0;
+
+      if (finModel === 'BoothRent') {
+        estyCut = rev; // Take home all revenue, rent is deducted periodically, not per session.
+        bizCut = 0;
+      } else {
+        estyCut = rev * (commPct / 100);
+        bizCut = rev - estyCut;
+      }
+
+      net += (estyCut + tip);
+      bizShare += bizCut;
+
+      // Group for MoM logic
+      if (activeTab === 'Month-over-Month') {
+        const d = new Date(s.dateStr);
+        if (d.getMonth() === currentMonth) currentMoMGross += rev;
+        else prevMoMGross += rev;
       }
     });
 
-    // Recalculating burn rate simply from (Gross - Net) is flawed for Commission/Rental.
-    // However, since we don't have direct access to materialCosts without async fetching,
-    // we will approximate or leave Burn Rate 0 for now until we optimize.
-    // For now we'll focus on Service Distribution.
+    // Chart logic
+    let lineLabels = [];
+    let netData = [];
+    let bizData = [];
     
+    // Sort logs ascending
+    relevantLogs.sort((a, b) => new Date(a.dateStr) - new Date(b.dateStr));
+
+    if (activeTab === 'Current Month' || activeTab === 'Month-over-Month') {
+      // Group by Day
+      const dailyMap = {};
+      relevantLogs.forEach(l => {
+        const d = new Date(l.dateStr);
+        if (activeTab === 'Month-over-Month' && d.getMonth() !== currentMonth) return; // Only line chart for current month
+        const day = d.getDate();
+        dailyMap[day] = dailyMap[day] || { n: 0, g: 0 };
+        dailyMap[day].g += l.totalGrossRev;
+        dailyMap[day].n += l.netProfit;
+      });
+
+      for (let i = 1; i <= 31; i++) {
+        if (dailyMap[i]) {
+          lineLabels.push(`Day ${i}`);
+          netData.push(dailyMap[i].n);
+          // Approximate biz share on line chart
+          bizData.push(dailyMap[i].g - dailyMap[i].n); 
+        }
+      }
+    } else {
+      // Group by Month
+      const monthlyMap = {};
+      relevantLogs.forEach(l => {
+        const d = new Date(l.dateStr);
+        const mKey = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        monthlyMap[mKey] = monthlyMap[mKey] || { n: 0, g: 0 };
+        monthlyMap[mKey].g += l.totalGrossRev;
+        monthlyMap[mKey].n += l.netProfit;
+      });
+
+      Object.keys(monthlyMap).sort().forEach(k => {
+        lineLabels.push(k);
+        netData.push(monthlyMap[k].n);
+        bizData.push(monthlyMap[k].g - monthlyMap[k].n);
+      });
+    }
+
+    const lineTemplate = {
+      labels: lineLabels,
+      datasets: [
+        {
+          label: 'Your Net Earnings ($)',
+          data: netData,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          tension: 0.3, fill: true, pointRadius: 3
+        },
+        {
+          label: 'Business Share ($)',
+          data: bizData,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.2)',
+          tension: 0.3, fill: true, pointRadius: 3
+        }
+      ]
+    };
+
+    const barTemplate = {
+      labels: ['Take-Home vs Business'],
+      datasets: [
+        { label: 'Your Net', data: [net], backgroundColor: '#10b981' },
+        { label: 'Business Share', data: [bizShare], backgroundColor: '#f59e0b' }
+      ]
+    };
+
+    let previousData = null;
+    if (activeTab === 'Month-over-Month') {
+      previousData = {
+        current: currentMoMGross,
+        previous: prevMoMGross,
+        growth: prevMoMGross > 0 ? ((currentMoMGross - prevMoMGross) / prevMoMGross * 100) : 100
+      };
+    }
+
     return {
       totalGross: gross,
       totalNet: net,
-      totalHours: hours,
+      businessShare: bizShare,
+      totalTips: tips,
       totalSessions: relevantSessions.length,
-      hourlyYield: hours > 0 ? (net / hours) : 0,
-      recentDays: recentLogs,
-      serviceDistribution: serviceDistribution
+      serviceDistribution: distribution,
+      lineChartTemplate: lineTemplate,
+      barChartTemplate: barTemplate,
+      previousMoM: previousData
     };
-  }, [dailyLogs, sessions, serviceCatalog]);
 
-  // Chart Data Preparation
-  const labels = recentDays.map(log => {
-    // just MM-DD for x axis
-    const parts = log.dateStr.split('-');
-    return `${parts[1]}-${parts[2]}`;
-  }); 
-
-  const netDataTemplate = {
-    labels,
-    datasets: [
-      {
-        label: 'Net Profit ($)',
-        data: recentDays.map(log => log.netProfit),
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.2)',
-        tension: 0.3,
-        fill: true,
-        pointRadius: 4,
-        pointBackgroundColor: '#10b981'
-      }
-    ]
-  };
-
-  const hoursDataTemplate = {
-    labels,
-    datasets: [
-      {
-        label: 'Hours Worked',
-        data: recentDays.map(log => log.totalHours),
-        backgroundColor: '#3b82f6',
-        borderRadius: 4
-      }
-    ]
-  };
+  }, [dailyLogs, sessions, serviceCatalog, settings, activeTab]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: { legend: { position: 'top' } },
     scales: {
       x: { grid: { display: false } },
       y: { border: { display: false } }
     }
   };
 
-  const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { 
-      legend: { position: 'right' } 
-    }
-  };
-
   const pieDataTemplate = {
     labels: Object.keys(serviceDistribution || {}),
-    datasets: [
-      {
-        data: Object.values(serviceDistribution || {}),
-        backgroundColor: [
-          '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'
-        ],
-        borderWidth: 1
-      }
-    ]
+    datasets: [{
+      data: Object.values(serviceDistribution || {}),
+      backgroundColor: [
+        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'
+      ],
+      borderWidth: 1
+    }]
   };
+
+  const tabs = ['Current Month', 'Month-over-Month', 'YTD', 'Previous Years'];
 
   return (
     <div style={{padding: '16px'}}>
-      <h1 style={{fontSize: '1.5rem', marginBottom: '4px'}}>Reports Dashboard</h1>
-      <p style={{color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.875rem'}}>Trailing 30 Days</p>
+      <h1 style={{fontSize: '1.5rem', marginBottom: '16px'}}>Deep Analytics</h1>
+      
+      {/* Tab Navigation */}
+      <div style={{display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '16px', marginBottom: '8px'}}>
+        {tabs.map(tab => (
+          <button 
+            key={tab} 
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '8px 16px', 
+              borderRadius: '20px', 
+              border: 'none', 
+              background: activeTab === tab ? 'var(--primary-color)' : 'var(--bg-color)',
+              color: activeTab === tab ? 'white' : 'var(--text-color)',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              border: activeTab === tab ? 'none' : '1px solid var(--border-color)'
+            }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
 
       {/* KPI Cards */}
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px'}}>
         <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Net</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Your Net Earnings</div>
           <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--success-color)'}}>${totalNet.toFixed(2)}</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>Includes ${totalTips.toFixed(2)} tips</div>
+        </div>
+        <div className="card" style={{padding: '16px', borderLeft: '4px solid var(--danger-color)'}}>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Business Share</div>
+          <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--danger-color)'}}>${businessShare.toFixed(2)}</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>What she's making the company</div>
         </div>
         <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Hourly Yield</div>
-          <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary-color)'}}>${hourlyYield.toFixed(2)}/hr</div>
-        </div>
-        <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Gross Rev</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Gross Revenue</div>
           <div style={{fontSize: '1.5rem', fontWeight: 700}}>${totalGross.toFixed(2)}</div>
         </div>
         <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Sessions</div>
-          <div style={{fontSize: '1.5rem', fontWeight: 700}}>{totalSessions} <span style={{fontSize:'1rem', color:'var(--text-secondary)', fontWeight: 500}}>({totalHours.toFixed(1)}h)</span></div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Services</div>
+          <div style={{fontSize: '1.5rem', fontWeight: 700}}>{totalSessions} <span style={{fontSize:'0.875rem', fontWeight:400}}>logs</span></div>
         </div>
       </div>
 
-      {/* Charts */}
-      {recentDays.length > 0 ? (
+      {activeTab === 'Month-over-Month' && previousMoM && (
+        <div className="card" style={{padding: '16px', marginBottom: '24px', background: 'var(--card-bg)', border: '1px solid var(--primary-color)'}}>
+          <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '8px', color: 'var(--primary-color)'}}>Growth Analysis</h3>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <div>
+              <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>Last Month Gross</div>
+              <div style={{fontSize: '1.25rem', fontWeight: 600}}>${previousMoM.previous.toFixed(2)}</div>
+            </div>
+            <div>
+              <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>Current Month Gross</div>
+              <div style={{fontSize: '1.25rem', fontWeight: 600}}>${previousMoM.current.toFixed(2)}</div>
+            </div>
+            <div style={{textAlign: 'right'}}>
+              <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>MoM Change</div>
+              <div style={{fontSize: '1.25rem', fontWeight: 700, color: previousMoM.growth >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}}>
+                {previousMoM.growth > 0 ? '+' : ''}{previousMoM.growth.toFixed(1)}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Breakdown Area */}
+      {totalSessions > 0 ? (
         <>
-          <div className="card" style={{padding: '16px', marginBottom: '16px'}}>
-            <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px', color: 'var(--text-secondary)'}}>Net Profit Trend</h3>
-            <div style={{height: '200px'}}>
-              <Line options={chartOptions} data={netDataTemplate} />
+          <div className="card" style={{padding: '16px', marginBottom: '24px'}}>
+            <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px'}}>Revenue & Take-Home Split over Time</h3>
+            <div style={{height: '240px'}}>
+              <Line options={chartOptions} data={lineChartTemplate} />
             </div>
           </div>
           
-          <div className="card" style={{padding: '16px', marginBottom: '32px'}}>
-            <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px', color: 'var(--text-secondary)'}}>Daily Logged Hours</h3>
-            <div style={{height: '180px'}}>
-              <Bar options={chartOptions} data={hoursDataTemplate} />
+          <div style={{display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '16px', marginBottom: '32px'}}>
+            <div className="card" style={{padding: '16px'}}>
+              <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px'}}>Take-Home vs Business Share</h3>
+              <div style={{height: '250px'}}>
+                <Bar options={chartOptions} data={barChartTemplate} />
+              </div>
+            </div>
+            <div className="card" style={{padding: '16px'}}>
+              <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px'}}>Service Popularity</h3>
+              <div style={{height: '250px'}}>
+                <Pie options={{responsive:true, maintainAspectRatio:false, plugins: {legend: {position: 'bottom'}}}} data={pieDataTemplate} />
+              </div>
             </div>
           </div>
 
-          <div style={{display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '16px', marginBottom: '32px'}}>
-            <div className="card" style={{padding: '16px'}}>
-              <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px', color: 'var(--text-secondary)'}}>Service Distribution</h3>
-              <div style={{height: '250px'}}>
-                {Object.keys(serviceDistribution).length > 0 ? (
-                  <Pie options={pieOptions} data={pieDataTemplate} />
-                ) : (
-                  <p style={{textAlign: 'center', color: 'var(--text-secondary)', marginTop: '50px'}}>No services logged</p>
-                )}
-              </div>
-            </div>
-            <div className="card" style={{padding: '16px'}}>
-              <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px', color: 'var(--text-secondary)'}}>Inventory Burn Rate</h3>
-              <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '250px'}}>
-                <div style={{fontSize: '0.875rem', color: 'var(--text-secondary)', textTransform: 'uppercase'}}>30-Day COGS Estimate</div>
-                <div style={{fontSize: '2.5rem', fontWeight: 800, color: 'var(--danger-color)', marginTop: '8px'}}>${(totalGross - totalNet).toFixed(2)}</div>
-                <p style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '16px'}}>
-                  Approximation based on total gross vs net margin deductions (including rent/commission).
-                </p>
-              </div>
-            </div>
+          <div className="card" style={{padding: '16px', marginBottom: '32px'}}>
+            <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px'}}>Exact Service Counts for this Period</h3>
+            <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem'}}>
+              <tbody>
+                {Object.entries(serviceDistribution)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([name, count], i) => (
+                  <tr key={i} style={{borderBottom: '1px solid var(--border-color)'}}>
+                    <td style={{padding: '12px 0', fontWeight: 500}}>{name}</td>
+                    <td style={{padding: '12px 0', textAlign: 'right', color: 'var(--text-secondary)'}}>{count} services</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </>
       ) : (
-        <div style={{textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)'}}>
-          <p>Not enough data yet. Log some hours to see your trends!</p>
+        <div style={{textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)'}}>
+          <p>No valid data for this period.</p>
         </div>
       )}
 
