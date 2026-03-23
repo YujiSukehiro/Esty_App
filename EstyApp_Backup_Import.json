@@ -6,7 +6,7 @@
     },
     {
       "key": "commissionPercentage",
-      "value": 50
+      "value": 35
     },
     {
       "key": "monthlyRent",
@@ -207,368 +207,316 @@
       "linkedMaterials": []
     }
   ],
-  "materialCatalog": [
-    {
-      "id": 1,
-      "materialName": "Classic Lash Tray",
-      "unitCost": 15.0
-    },
-    {
-      "id": 2,
-      "materialName": "Volume Lash Tray",
-      "unitCost": 18.0
-    },
-    {
-      "id": 3,
-      "materialName": "Premium Black Adhesive",
-      "unitCost": 45.0
-    },
-    {
-      "id": 4,
-      "materialName": "Under-Eye Pads (Pair)",
-      "unitCost": 0.5
-    },
-    {
-      "id": 5,
-      "materialName": "Mascara Spoolie Wand",
-      "unitCost": 0.1
-    }
-  ],
-  "inventory": [
-    {
-      "id": 1,
-      "materialId": 1,
-      "currentQuantity": 10.0
-    },
-    {
-      "id": 2,
-      "materialId": 2,
-      "currentQuantity": 10.0
-    },
-    {
-      "id": 3,
-      "materialId": 3,
-      "currentQuantity": 2.0
-    },
-    {
-      "id": 4,
-      "materialId": 4,
-      "currentQuantity": 100.0
-    },
-    {
-      "id": 5,
-      "materialId": 5,
-      "currentQuantity": 100.0
-    }
-  ],
+  "materialCatalog": [],
+  "inventory": [],
   "dailyLogs": [
     {
       "dateStr": "2026-01-05",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 387.0,
-      "netProfit": 274.0
+      "netProfit": 215.94999999999996
     },
     {
       "dateStr": "2026-01-06",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 369.0,
-      "netProfit": 247.5
+      "netProfit": 192.14999999999998
     },
     {
       "dateStr": "2026-01-12",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 411.99,
-      "netProfit": 289.78499999999997
+      "netProfit": 227.9865
     },
     {
       "dateStr": "2026-01-13",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 319.0,
-      "netProfit": 228.68
+      "netProfit": 180.83
     },
     {
       "dateStr": "2026-01-15",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 245.0,
-      "netProfit": 147.5
+      "netProfit": 110.74999999999999
     },
     {
       "dateStr": "2026-01-16",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 182.0,
-      "netProfit": 121.0
+      "netProfit": 93.7
     },
     {
       "dateStr": "2026-01-17",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 375.99,
-      "netProfit": 252.995
+      "netProfit": 196.5965
     },
     {
       "dateStr": "2026-01-19",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 88.0,
-      "netProfit": 54.5
+      "netProfit": 41.3
     },
     {
       "dateStr": "2026-01-20",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 208.0,
-      "netProfit": 121.82
+      "netProfit": 90.62
     },
     {
       "dateStr": "2026-01-23",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 225.0,
-      "netProfit": 161.45
+      "netProfit": 127.69999999999999
     },
     {
       "dateStr": "2026-01-26",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 306.0,
-      "netProfit": 212.09
+      "netProfit": 166.19
     },
     {
       "dateStr": "2026-01-27",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 180.0,
-      "netProfit": 130.62
+      "netProfit": 103.61999999999999
     },
     {
       "dateStr": "2026-01-29",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 291.0,
-      "netProfit": 170.5
+      "netProfit": 126.85
     },
     {
       "dateStr": "2026-01-30",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 342.98,
-      "netProfit": 234.09
+      "netProfit": 182.643
     },
     {
       "dateStr": "2026-01-31",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 355.99,
-      "netProfit": 242.395
+      "netProfit": 188.9965
     },
     {
       "dateStr": "2026-02-02",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 254.99,
-      "netProfit": 182.495
+      "netProfit": 144.24649999999997
     },
     {
       "dateStr": "2026-02-03",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 317.99,
-      "netProfit": 219.415
+      "netProfit": 171.7165
     },
     {
       "dateStr": "2026-02-06",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 256.0,
-      "netProfit": 161.1
+      "netProfit": 122.69999999999999
     },
     {
       "dateStr": "2026-02-09",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 334.0,
-      "netProfit": 209.85
+      "netProfit": 159.75
     },
     {
       "dateStr": "2026-02-10",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 324.0,
-      "netProfit": 216.1
+      "netProfit": 167.5
     },
     {
       "dateStr": "2026-02-13",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 364.0,
-      "netProfit": 241.0
+      "netProfit": 186.39999999999998
     },
     {
       "dateStr": "2026-02-14",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 410.98,
-      "netProfit": 291.54
+      "netProfit": 229.89299999999997
     },
     {
       "dateStr": "2026-02-16",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 416.99,
-      "netProfit": 283.495
+      "netProfit": 220.94649999999996
     },
     {
       "dateStr": "2026-02-17",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 144.0,
-      "netProfit": 81.0
+      "netProfit": 59.39999999999999
     },
     {
       "dateStr": "2026-02-18",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 99.0,
-      "netProfit": 67.32
+      "netProfit": 52.47
     },
     {
       "dateStr": "2026-02-20",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 335.99,
-      "netProfit": 226.555
+      "netProfit": 176.15649999999997
     },
     {
       "dateStr": "2026-02-23",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 261.0,
-      "netProfit": 183.32999999999998
+      "netProfit": 144.18
     },
     {
       "dateStr": "2026-02-24",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 324.0,
-      "netProfit": 225.22
+      "netProfit": 176.61999999999998
     },
     {
       "dateStr": "2026-02-26",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 382.0,
-      "netProfit": 253.82
+      "netProfit": 196.52
     },
     {
       "dateStr": "2026-02-27",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 588.99,
-      "netProfit": 373.095
+      "netProfit": 284.74649999999997
     },
     {
       "dateStr": "2026-02-28",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 443.99,
-      "netProfit": 332.815
+      "netProfit": 266.2165
     },
     {
       "dateStr": "2026-03-02",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 360.99,
-      "netProfit": 267.995
+      "netProfit": 213.8465
     },
     {
       "dateStr": "2026-03-03",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 116.0,
-      "netProfit": 68.0
+      "netProfit": 50.599999999999994
     },
     {
       "dateStr": "2026-03-04",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 63.0,
-      "netProfit": 40.5
+      "netProfit": 31.049999999999997
     },
     {
       "dateStr": "2026-03-06",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 173.99,
-      "netProfit": 115.995
+      "netProfit": 89.89649999999999
     },
     {
       "dateStr": "2026-03-09",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 180.0,
-      "netProfit": 139.75
+      "netProfit": 112.75
     },
     {
       "dateStr": "2026-03-10",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 279.0,
-      "netProfit": 200.12
+      "netProfit": 158.26999999999998
     },
     {
       "dateStr": "2026-03-12",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 279.99,
-      "netProfit": 205.495
+      "netProfit": 163.49649999999997
     },
     {
       "dateStr": "2026-03-13",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 291.0,
-      "netProfit": 212.67000000000002
+      "netProfit": 169.02
     },
     {
       "dateStr": "2026-03-14",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 398.99,
-      "netProfit": 275.515
+      "netProfit": 215.66649999999998
     },
     {
       "dateStr": "2026-03-15",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 344.0,
-      "netProfit": 239.6
+      "netProfit": 188.0
     },
     {
       "dateStr": "2026-03-16",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 251.0,
-      "netProfit": 183.8
+      "netProfit": 146.14999999999998
     },
     {
       "dateStr": "2026-03-17",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 225.0,
-      "netProfit": 200.82
+      "netProfit": 167.07
     },
     {
       "dateStr": "2026-03-20",
       "totalHours": 8,
       "locationCost": 0,
       "totalGrossRev": 416.99,
-      "netProfit": 263.315
+      "netProfit": 200.7665
     }
   ],
   "sessions": [

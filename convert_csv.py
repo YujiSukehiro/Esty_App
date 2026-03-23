@@ -35,26 +35,14 @@ OFFICIAL_SERVICES = [
 data = {
     "settings": [
         { "key": "financialModel", "value": "Commission" },
-        { "key": "commissionPercentage", "value": 50 },
+        { "key": "commissionPercentage", "value": 35 },
         { "key": "monthlyRent", "value": 0 },
         { "key": "workingDaysPerMonth", "value": 20 },
         { "key": "currency", "value": "USD" }
     ],
     "serviceCatalog": OFFICIAL_SERVICES,
-    "materialCatalog": [
-        {"id": 1, "materialName": "Classic Lash Tray", "unitCost": 15.00},
-        {"id": 2, "materialName": "Volume Lash Tray", "unitCost": 18.00},
-        {"id": 3, "materialName": "Premium Black Adhesive", "unitCost": 45.00},
-        {"id": 4, "materialName": "Under-Eye Pads (Pair)", "unitCost": 0.50},
-        {"id": 5, "materialName": "Mascara Spoolie Wand", "unitCost": 0.10}
-    ],
-    "inventory": [
-        {"id": 1, "materialId": 1, "currentQuantity": 10.0},
-        {"id": 2, "materialId": 2, "currentQuantity": 10.0},
-        {"id": 3, "materialId": 3, "currentQuantity": 2.0},
-        {"id": 4, "materialId": 4, "currentQuantity": 100.0},
-        {"id": 5, "materialId": 5, "currentQuantity": 100.0}
-    ],
+    "materialCatalog": [],
+    "inventory": [],
     "dailyLogs": [],
     "sessions": []
 }
@@ -172,8 +160,8 @@ with open('database.csv', 'r') as f:
                 "netProfit": 0
             }
             
-        # Assuming Commission defaults to 50% split for the net profit calculation
-        commission_take_home = custom_rev * 0.50
+        # Assuming Commission defaults to 35% split for the net profit calculation
+        commission_take_home = custom_rev * 0.35
         
         daily_logs_map[dateStr]["totalGrossRev"] += custom_rev
         daily_logs_map[dateStr]["netProfit"] += commission_take_home + tip_amt
