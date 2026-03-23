@@ -31,7 +31,8 @@ ChartJS.register(
 );
 
 export default function ReportsView() {
-  const [activeTab, setActiveTab] = useState('Current Month'); // Current Month, Month-over-Month, YTD, Previous Years
+  const [activeTab, setActiveTab] = useState('Current Month'); // Current Month, Month-over-Month, Previous Months, YTD, Previous Years
+  const [selectedPrevMonth, setSelectedPrevMonth] = useState('');
   
   const dailyLogs = useLiveQuery(() => db.dailyLogs.toArray());
   const sessions = useLiveQuery(() => db.sessions.toArray());
@@ -61,11 +62,32 @@ export default function ReportsView() {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
 
+    // Discover available months from all sessions
+    const monthsSet = new Set();
+    sessions?.forEach(s => {
+      const d = new Date(s.dateStr);
+      monthsSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    });
+    const availableMonths = Array.from(monthsSet).sort().reverse();
+    
+    // Auto-select most recent previous month if none selected
+    let effectivePrevMonth = selectedPrevMonth;
+    if (activeTab === 'Previous Months' && !effectivePrevMonth && availableMonths.length > 0) {
+      // Exclude current month if possible
+      const currentMonthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+      const pastOnly = availableMonths.filter(m => m !== currentMonthStr);
+      effectivePrevMonth = pastOnly[0] || availableMonths[0];
+    }
+
     // Helper to check boundaries
     const filterData = (dateStr) => {
       const d = new Date(dateStr);
+      const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      
       if (activeTab === 'Current Month') {
         return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      } else if (activeTab === 'Previous Months') {
+        return mStr === effectivePrevMonth;
       } else if (activeTab === 'YTD') {
         return d.getFullYear() === currentYear;
       } else if (activeTab === 'Previous Years') {
@@ -133,7 +155,7 @@ export default function ReportsView() {
     // Sort logs ascending
     relevantLogs.sort((a, b) => new Date(a.dateStr) - new Date(b.dateStr));
 
-    if (activeTab === 'Current Month' || activeTab === 'Month-over-Month') {
+    if (activeTab === 'Current Month' || activeTab === 'Previous Months' || activeTab === 'Month-over-Month') {
       // Group by Day
       const dailyMap = {};
       relevantLogs.forEach(l => {
@@ -217,10 +239,12 @@ export default function ReportsView() {
       serviceDistribution: distribution,
       lineChartTemplate: lineTemplate,
       barChartTemplate: barTemplate,
-      previousMoM: previousData
+      previousMoM: previousData,
+      availableMonths: availableMonths,
+      effectivePrevMonth: effectivePrevMonth
     };
 
-  }, [dailyLogs, sessions, serviceCatalog, settings, activeTab]);
+  }, [dailyLogs, sessions, serviceCatalog, settings, activeTab, selectedPrevMonth]);
 
   const chartOptions = {
     responsive: true,
@@ -243,7 +267,7 @@ export default function ReportsView() {
     }]
   };
 
-  const tabs = ['Current Month', 'Month-over-Month', 'YTD', 'Previous Years'];
+  const tabs = ['Current Month', 'Month-over-Month', 'Previous Months', 'YTD', 'Previous Years'];
 
   return (
     <div style={{padding: '16px'}}>
@@ -272,6 +296,23 @@ export default function ReportsView() {
           </button>
         ))}
       </div>
+
+      {activeTab === 'Previous Months' && (
+        <div style={{marginBottom: '16px'}}>
+          <select 
+            className="input-field" 
+            style={{padding: '8px 12px', minWidth: '200px', fontWeight: 600}}
+            value={Math.max(0, effectivePrevMonth)}
+            onChange={(e) => setSelectedPrevMonth(e.target.value)}
+          >
+            {availableMonths.map(m => {
+              const [y, mm] = m.split('-');
+              const d = new Date(y, mm - 1, 1);
+              return <option key={m} value={m}>{d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</option>;
+            })}
+          </select>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px'}}>
