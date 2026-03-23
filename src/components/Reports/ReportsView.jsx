@@ -42,6 +42,8 @@ export default function ReportsView() {
   const {
     totalGross,
     totalNet,
+    afterTaxNet,
+    effectiveTaxRate,
     businessShare,
     totalTips,
     cashTips,
@@ -55,7 +57,7 @@ export default function ReportsView() {
     effectivePrevMonth
   } = useMemo(() => {
     if (!dailyLogs || !sessions || !settings) return {
-      totalGross: 0, totalNet: 0, businessShare: 0, totalTips: 0, cashTips: 0, cardTips: 0, totalSessions: 0,
+      totalGross: 0, totalNet: 0, afterTaxNet: 0, effectiveTaxRate: 25, businessShare: 0, totalTips: 0, cashTips: 0, cardTips: 0, totalSessions: 0,
       serviceDistribution: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null,
       availableMonths: [], effectivePrevMonth: ''
     };
@@ -234,6 +236,11 @@ export default function ReportsView() {
       ]
     };
 
+    const taxPct = settings.find(s => s.key === 'estimatedTaxRate')?.value;
+    const effectiveTaxRate = taxPct !== undefined ? taxPct : 25; // default 25% if not set
+    const taxAmount = net * (effectiveTaxRate / 100);
+    const afterTaxNet = net - taxAmount;
+
     let previousData = null;
     if (activeTab === 'Month-over-Month') {
       previousData = {
@@ -246,6 +253,8 @@ export default function ReportsView() {
     return {
       totalGross: gross,
       totalNet: net,
+      afterTaxNet: afterTaxNet,
+      effectiveTaxRate: effectiveTaxRate,
       businessShare: bizShare,
       totalTips: tips,
       cashTips: cashT,
@@ -345,7 +354,9 @@ export default function ReportsView() {
         <div className="card" style={{padding: '16px'}}>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Your Net Earnings</div>
           <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--success-color)'}}>${totalNet.toFixed(2)}</div>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>Includes tips</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>
+            Post-Tax Net (estimated at {effectiveTaxRate}%): <strong style={{color: 'var(--text-color)'}}>${afterTaxNet.toFixed(2)}</strong>
+          </div>
         </div>
         <div className="card" style={{padding: '16px', borderLeft: '4px solid var(--danger-color)'}}>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Business Share</div>

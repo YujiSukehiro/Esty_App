@@ -8,6 +8,7 @@ export default function FinancialSetup() {
   const [commissionPct, setCommissionPct] = useState(50);
   const [monthlyRent, setMonthlyRent] = useState(0);
   const [workingDays, setWorkingDays] = useState(20);
+  const [taxRate, setTaxRate] = useState(25); // Default 25%
 
   useEffect(() => {
     if (settings) {
@@ -19,6 +20,8 @@ export default function FinancialSetup() {
       if (mr !== undefined) setMonthlyRent(mr);
       const wd = settings.find(s => s.key === 'workingDaysPerMonth')?.value;
       if (wd) setWorkingDays(wd);
+      const tr = settings.find(s => s.key === 'estimatedTaxRate')?.value;
+      if (tr !== undefined) setTaxRate(tr);
     }
   }, [settings]);
 
@@ -27,7 +30,8 @@ export default function FinancialSetup() {
       { key: 'financialModel', value: model },
       { key: 'commissionPercentage', value: Number(commissionPct) },
       { key: 'monthlyRent', value: Number(monthlyRent) },
-      { key: 'workingDaysPerMonth', value: Number(workingDays) }
+      { key: 'workingDaysPerMonth', value: Number(workingDays) },
+      { key: 'estimatedTaxRate', value: Number(taxRate) }
     ]);
     alert('Financial Settings Saved Successfully!');
   };
@@ -85,6 +89,17 @@ export default function FinancialSetup() {
           </div>
         </>
       )}
+
+      <div className="input-group" style={{marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px'}}>
+        <label>Estimated Tax Bracket (%)</label>
+        <p style={{fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 8px 0'}}>Used to calculate your true post-tax take home on the Reports dashboard.</p>
+        <input 
+          type="number" 
+          className="input-field" 
+          value={taxRate} 
+          onChange={e => setTaxRate(e.target.value)} 
+        />
+      </div>
 
       <button className="btn btn-primary" onClick={saveSettings}>Save Global Settings</button>
     </div>
