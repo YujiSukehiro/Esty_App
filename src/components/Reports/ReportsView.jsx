@@ -269,20 +269,7 @@ export default function ReportsView() {
       ]
     };
 
-    const mRent = settings.find(s => s.key === 'monthlyRent')?.value || 0;
-    let computedRentOverhead = 0;
-    if (finModel === 'BoothRent' && net > 0) { // Only charge overhead if actively working
-      computedRentOverhead = mRent * monthsInPeriod;
-      net -= computedRentOverhead; // Rent is subtracted from Net since Booth Renter eats overhead
-    }
-    
-    // Tax is calculated AFTER COGS and Overhead are legally deducted from profits!
-    const taxPct = settings.find(s => s.key === 'estimatedTaxRate')?.value;
-    const effectiveTaxRate = taxPct !== undefined ? taxPct : 25; // default 25% if not set
-    const taxAmount = Math.max(0, net * (effectiveTaxRate / 100)); // Only tax on positive net
-    const afterTaxNet = net - taxAmount;
-
-    // Calculate Paycheck Size
+    // 1. Establish the timeframe duration (monthsInPeriod)
     let monthsInPeriod = 1;
     if (activeTab === 'YTD') {
       monthsInPeriod = Math.max(1, currentMonth + (now.getDate() / 30));
@@ -290,7 +277,22 @@ export default function ReportsView() {
       const uniqueMonths = new Set(relevantSessions.map(s => s.dateStr.substring(0, 7)));
       monthsInPeriod = Math.max(1, uniqueMonths.size);
     }
+
+    // 2. Subtract Overhead using monthsInPeriod
+    const mRent = settings.find(s => s.key === 'monthlyRent')?.value || 0;
+    let computedRentOverhead = 0;
+    if (finModel === 'BoothRent' && net > 0) { // Only charge overhead if actively working
+      computedRentOverhead = mRent * monthsInPeriod;
+      net -= computedRentOverhead; // Rent is subtracted from Net since Booth Renter eats overhead
+    }
     
+    // 3. Tax is calculated AFTER COGS and Overhead are legally deducted from profits!
+    const taxPct = settings.find(s => s.key === 'estimatedTaxRate')?.value;
+    const effectiveTaxRate = taxPct !== undefined ? taxPct : 25; // default 25% if not set
+    const taxAmount = Math.max(0, net * (effectiveTaxRate / 100)); // Only tax on positive net
+    const afterTaxNet = net - taxAmount;
+
+    // 4. Calculate Paycheck Size using monthsInPeriod and afterTaxNet
     let periodsPerMonth = 2.16; // default Bi-Weekly
     if (payFreq === 'Weekly') periodsPerMonth = 4.33;
     if (payFreq === 'Semi-Monthly') periodsPerMonth = 2.0;
