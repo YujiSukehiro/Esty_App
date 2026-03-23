@@ -33,6 +33,14 @@ OFFICIAL_SERVICES = [
 ]
 
 data = {
+    "settings": [
+        { "key": "financialModel", "value": "Commission" },
+        { "key": "commissionPercentage", "value": 35 },
+        { "key": "monthlyRent", "value": 0 },
+        { "key": "workingDaysPerMonth", "value": 20 },
+        { "key": "currency", "value": "USD" }
+    ],
+    "serviceCatalog": OFFICIAL_SERVICES,
     "dailyLogs": [],
     "sessions": []
 }
@@ -158,7 +166,7 @@ with open('database.csv', 'r') as f:
 
 data['dailyLogs'] = list(daily_logs_map.values())
 
-with open('EstyApp_Backup_Import_V3_HistoricalOnly.json', 'w') as f:
+with open('EstyApp_Backup_Import_V4_FullData.json', 'w') as f:
     json.dump(data, f, indent=2)
 
-print("Created upgraded EstyApp_Backup_Import_V3_HistoricalOnly.json")
+print("Created upgraded EstyApp_Backup_Import_V4_FullData.json")
