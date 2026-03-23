@@ -41,7 +41,8 @@ export default function ReportsView() {
     totalHours,
     totalSessions,
     hourlyYield,
-    recentDays
+    recentDays,
+    serviceDistribution
   } = useMemo(() => {
     if (!dailyLogs || !sessions) return { totalGross: 0, totalNet: 0, totalHours: 0, totalSessions: 0, hourlyYield: 0, recentDays: [] };
 
