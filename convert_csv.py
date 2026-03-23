@@ -168,7 +168,7 @@ with open('database.csv', 'r') as f:
 
 data['dailyLogs'] = list(daily_logs_map.values())
 
-with open('EstyApp_Backup_Import.json', 'w') as f:
+with open('EstyApp_Backup_Import_V2_CorrectPrices.json', 'w') as f:
     json.dump(data, f, indent=2)
 
-print("Created upgraded EstyApp_Backup_Import.json")
+print("Created upgraded EstyApp_Backup_Import_V2_CorrectPrices.json")
