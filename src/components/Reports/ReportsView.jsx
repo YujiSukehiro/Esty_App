@@ -47,6 +47,8 @@ export default function ReportsView() {
     expectedCheckGross,
     expectedCheckNet,
     payFrequency,
+    totalCOGS,
+    rentOverhead,
     businessShare,
     totalTips,
     cashTips,
@@ -121,7 +123,7 @@ export default function ReportsView() {
     let bizShare = 0;
     let tips = 0;
     let cashT = 0;
-    let cardT = 0;
+    let cogs = 0;
 
     // For MoM specifically, we need to bucket into current vs previous
     let currentMoMGross = 0;
@@ -147,13 +149,24 @@ export default function ReportsView() {
 
       let estyCut = 0;
       let bizCut = 0;
+      let sessionCOGS = 0;
+
+      // Extract Material COGS if linked
+      if (svc && svc.linkedMaterials && materialCatalog) {
+        svc.linkedMaterials.forEach(lm => {
+          const mat = materialCatalog.find(m => m.id === lm.materialId);
+          if (mat && mat.unitCost) {
+            sessionCOGS += (mat.unitCost * lm.quantity);
+          }
+        });
+      }
 
       if (finModel === 'BoothRent') {
-        estyCut = rev; // Take home all revenue, rent is deducted periodically, not per session.
+        estyCut = rev - sessionCOGS; // Take home revenue minus COGS. Rent handled periodically.
         bizCut = 0;
       } else {
         estyCut = rev * (commPct / 100);
-        bizCut = rev - estyCut;
+        bizCut = rev - estyCut - sessionCOGS; // Business eats the material cost
       }
 
       // Group for MoM logic, only add to main KPIs if it's the current month
@@ -165,6 +178,7 @@ export default function ReportsView() {
           bizShare += bizCut;
           gross += rev;
           tips += tip;
+          cogs += sessionCOGS;
           if (s.tipType === 'Cash') cashT += tip; else cardT += tip;
         } else {
           prevMoMGross += rev;
@@ -174,6 +188,7 @@ export default function ReportsView() {
         bizShare += bizCut;
         gross += rev;
         tips += tip;
+        cogs += sessionCOGS;
         if (s.tipType === 'Cash') cashT += tip; else cardT += tip;
       }
     });
@@ -252,9 +267,17 @@ export default function ReportsView() {
       ]
     };
 
+    const mRent = settings.find(s => s.key === 'monthlyRent')?.value || 0;
+    let computedRentOverhead = 0;
+    if (finModel === 'BoothRent' && expectedCheckGross > 0) { // Only charge overhead if actively working
+      computedRentOverhead = mRent * monthsInPeriod;
+      net -= computedRentOverhead; // Rent is subtracted from Net since Booth Renter eats overhead
+    }
+    
+    // Tax is calculated AFTER COGS and Overhead are legally deducted from profits!
     const taxPct = settings.find(s => s.key === 'estimatedTaxRate')?.value;
     const effectiveTaxRate = taxPct !== undefined ? taxPct : 25; // default 25% if not set
-    const taxAmount = net * (effectiveTaxRate / 100);
+    const taxAmount = Math.max(0, net * (effectiveTaxRate / 100)); // Only tax on positive net
     const afterTaxNet = net - taxAmount;
 
     // Calculate Paycheck Size
@@ -292,6 +315,8 @@ export default function ReportsView() {
       expectedCheckGross: expectedCheckGross,
       expectedCheckNet: expectedCheckNet,
       payFrequency: payFreq,
+      totalCOGS: cogs,
+      rentOverhead: computedRentOverhead,
       businessShare: bizShare,
       totalTips: tips,
       cashTips: cashT,
@@ -395,6 +420,13 @@ export default function ReportsView() {
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>
             Taxes deducted at {effectiveTaxRate}% (${(totalNet - afterTaxNet).toFixed(2)})
           </div>
+          {(rentOverhead > 0 || totalCOGS > 0) && (
+            <div style={{fontSize: '0.75rem', color: 'var(--danger-color)', marginTop: '4px'}}>
+              {rentOverhead > 0 && <span>-${rentOverhead.toFixed(2)} rent</span>}
+              {rentOverhead > 0 && totalCOGS > 0 && <span> | </span>}
+              {totalCOGS > 0 && <span>-${totalCOGS.toFixed(2)} supplies</span>}
+            </div>
+          )}
         </div>
         <div className="card" style={{padding: '16px', borderLeft: '4px solid var(--danger-color)'}}>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Business Share</div>
