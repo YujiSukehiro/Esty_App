@@ -48,11 +48,14 @@ export default function ReportsView() {
     serviceDistribution,
     lineChartTemplate,
     barChartTemplate,
-    previousMoM
+    previousMoM,
+    availableMonths,
+    effectivePrevMonth
   } = useMemo(() => {
     if (!dailyLogs || !sessions || !settings) return {
       totalGross: 0, totalNet: 0, businessShare: 0, totalTips: 0, totalSessions: 0,
-      serviceDistribution: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null
+      serviceDistribution: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null,
+      availableMonths: [], effectivePrevMonth: ''
     };
 
     const finModel = settings.find(s => s.key === 'financialModel')?.value || 'Commission';
@@ -302,7 +305,7 @@ export default function ReportsView() {
           <select 
             className="input-field" 
             style={{padding: '8px 12px', minWidth: '200px', fontWeight: 600}}
-            value={Math.max(0, effectivePrevMonth)}
+            value={effectivePrevMonth || ''}
             onChange={(e) => setSelectedPrevMonth(e.target.value)}
           >
             {availableMonths.map(m => {
