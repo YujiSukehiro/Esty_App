@@ -271,7 +271,7 @@ export default function ReportsView() {
 
     const mRent = settings.find(s => s.key === 'monthlyRent')?.value || 0;
     let computedRentOverhead = 0;
-    if (finModel === 'BoothRent' && expectedCheckGross > 0) { // Only charge overhead if actively working
+    if (finModel === 'BoothRent' && net > 0) { // Only charge overhead if actively working
       computedRentOverhead = mRent * monthsInPeriod;
       net -= computedRentOverhead; // Rent is subtracted from Net since Booth Renter eats overhead
     }
