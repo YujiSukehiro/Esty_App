@@ -44,6 +44,8 @@ export default function ReportsView() {
     totalNet,
     businessShare,
     totalTips,
+    cashTips,
+    cardTips,
     totalSessions,
     serviceDistribution,
     lineChartTemplate,
