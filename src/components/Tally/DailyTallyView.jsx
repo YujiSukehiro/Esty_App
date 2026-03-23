@@ -9,6 +9,9 @@ import SessionLedger from './SessionLedger';
 export default function DailyTallyView({ dateStr }) {
   const dailyLogs = useLiveQuery(() => db.dailyLogs.where('dateStr').equals(dateStr).toArray(), [dateStr]);
   const currentLog = dailyLogs?.[0]; // Will be undefined if it doesn't exist
+  const sessions = useLiveQuery(() => db.sessions.where('dateStr').equals(dateStr).toArray(), [dateStr]);
+  
+  const todayTips = sessions?.reduce((sum, s) => sum + (s.tipAmount || 0), 0) || 0;
 
   const settings = useLiveQuery(() => db.settings.toArray());
   
@@ -90,7 +93,19 @@ export default function DailyTallyView({ dateStr }) {
       {currentLog && (
         <div style={{marginTop: '32px'}}>
           <ServiceGrid dateStr={dateStr} onAddSession={handleAddSession} />
-          <h2 style={{fontSize: '1.25rem', marginBottom: '16px'}}>Session Ledger</h2>
+          
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '16px', marginTop: '32px'}}>
+            <h2 style={{fontSize: '1.25rem', margin: 0}}>Session Ledger</h2>
+            <div style={{textAlign: 'right'}}>
+              <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Today's Metrics</div>
+              <div style={{fontSize: '0.875rem', fontWeight: 600}}>
+                Gross: <span style={{color: 'var(--primary-color)'}}>${currentLog.totalGrossRev.toFixed(2)}</span>
+                <span style={{margin: '0 8px', color: 'var(--border-color)'}}>|</span>
+                Tips: <span style={{color: 'var(--success-color)'}}>${todayTips.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
           <SessionLedger dateStr={dateStr} />
         </div>
       )}

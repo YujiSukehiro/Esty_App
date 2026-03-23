@@ -276,22 +276,22 @@ export default function ReportsView() {
       {/* KPI Cards */}
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px'}}>
         <div className="card" style={{padding: '16px'}}>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Gross Revenue</div>
+          <div style={{fontSize: '1.5rem', fontWeight: 700}}>${totalGross.toFixed(2)}</div>
+        </div>
+        <div className="card" style={{padding: '16px'}}>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Tips</div>
+          <div style={{fontSize: '1.5rem', fontWeight: 800, color: 'var(--success-color)'}}>${totalTips.toFixed(2)}</div>
+        </div>
+        <div className="card" style={{padding: '16px'}}>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Your Net Earnings</div>
           <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--success-color)'}}>${totalNet.toFixed(2)}</div>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>Includes ${totalTips.toFixed(2)} tips</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>Includes tips</div>
         </div>
         <div className="card" style={{padding: '16px', borderLeft: '4px solid var(--danger-color)'}}>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Business Share</div>
           <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--danger-color)'}}>${businessShare.toFixed(2)}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>What she's making the company</div>
-        </div>
-        <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Gross Revenue</div>
-          <div style={{fontSize: '1.5rem', fontWeight: 700}}>${totalGross.toFixed(2)}</div>
-        </div>
-        <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Services</div>
-          <div style={{fontSize: '1.5rem', fontWeight: 700}}>{totalSessions} <span style={{fontSize:'0.875rem', fontWeight:400}}>logs</span></div>
         </div>
       </div>
 
