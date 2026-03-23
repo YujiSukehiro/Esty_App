@@ -12,6 +12,8 @@ export default function DailyTallyView({ dateStr }) {
   const sessions = useLiveQuery(() => db.sessions.where('dateStr').equals(dateStr).toArray(), [dateStr]);
   
   const todayTips = sessions?.reduce((sum, s) => sum + (s.tipAmount || 0), 0) || 0;
+  const cashTips = sessions?.reduce((sum, s) => sum + (s.tipType === 'Cash' ? (s.tipAmount || 0) : 0), 0) || 0;
+  const cardTips = todayTips - cashTips;
 
   const settings = useLiveQuery(() => db.settings.toArray());
   
@@ -102,6 +104,9 @@ export default function DailyTallyView({ dateStr }) {
                 Gross: <span style={{color: 'var(--primary-color)'}}>${currentLog.totalGrossRev.toFixed(2)}</span>
                 <span style={{margin: '0 8px', color: 'var(--border-color)'}}>|</span>
                 Tips: <span style={{color: 'var(--success-color)'}}>${todayTips.toFixed(2)}</span>
+                <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '2px'}}>
+                  Cash: ${cashTips.toFixed(2)} | Card: ${cardTips.toFixed(2)}
+                </div>
               </div>
             </div>
           </div>

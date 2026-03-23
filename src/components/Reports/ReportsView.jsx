@@ -53,7 +53,7 @@ export default function ReportsView() {
     effectivePrevMonth
   } = useMemo(() => {
     if (!dailyLogs || !sessions || !settings) return {
-      totalGross: 0, totalNet: 0, businessShare: 0, totalTips: 0, totalSessions: 0,
+      totalGross: 0, totalNet: 0, businessShare: 0, totalTips: 0, cashTips: 0, cardTips: 0, totalSessions: 0,
       serviceDistribution: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null,
       availableMonths: [], effectivePrevMonth: ''
     };
@@ -111,6 +111,8 @@ export default function ReportsView() {
     let net = 0; // Esthetician take home
     let bizShare = 0;
     let tips = 0;
+    let cashT = 0;
+    let cardT = 0;
 
     // For MoM specifically, we need to bucket into current vs previous
     let currentMoMGross = 0;
@@ -127,6 +129,12 @@ export default function ReportsView() {
       const tip = s.tipAmount || 0;
       gross += rev;
       tips += tip;
+      
+      if (s.tipType === 'Cash') {
+        cashT += tip;
+      } else {
+        cardT += tip;
+      }
 
       let estyCut = 0;
       let bizCut = 0;
@@ -238,6 +246,8 @@ export default function ReportsView() {
       totalNet: net,
       businessShare: bizShare,
       totalTips: tips,
+      cashTips: cashT,
+      cardTips: cardT,
       totalSessions: relevantSessions.length,
       serviceDistribution: distribution,
       lineChartTemplate: lineTemplate,
@@ -277,7 +287,7 @@ export default function ReportsView() {
       <h1 style={{fontSize: '1.5rem', marginBottom: '16px'}}>Deep Analytics</h1>
       
       {/* Tab Navigation */}
-      <div style={{display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '16px', marginBottom: '8px'}}>
+      <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '16px', marginBottom: '8px'}}>
         {tabs.map(tab => (
           <button 
             key={tab} 
@@ -326,6 +336,9 @@ export default function ReportsView() {
         <div className="card" style={{padding: '16px'}}>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Tips</div>
           <div style={{fontSize: '1.5rem', fontWeight: 800, color: 'var(--success-color)'}}>${totalTips.toFixed(2)}</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>
+            Cash: ${cashTips.toFixed(2)} <span style={{margin:'0 4px', color:'var(--border-color)'}}>|</span> Card: ${cardTips.toFixed(2)}
+          </div>
         </div>
         <div className="card" style={{padding: '16px'}}>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Your Net Earnings</div>
