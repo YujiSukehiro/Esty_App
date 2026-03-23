@@ -17,6 +17,12 @@ export default function DailyTallyView({ dateStr }) {
 
   const settings = useLiveQuery(() => db.settings.toArray());
   
+  const taxPct = settings?.find(s => s.key === 'estimatedTaxRate')?.value;
+  const effectiveTaxRate = taxPct !== undefined ? taxPct : 25;
+  const todayNet = currentLog?.netProfit || 0;
+  const todayTaxes = todayNet * (effectiveTaxRate / 100);
+  const todayTrueNet = todayNet - todayTaxes;
+  
   // Create a display date strictly using the string to avoid timezone shifts
   // Simple YYYY-MM-DD split
   const [yyyy, mm, dd] = dateStr.split('-');
@@ -106,6 +112,11 @@ export default function DailyTallyView({ dateStr }) {
                 Tips: <span style={{color: 'var(--success-color)'}}>${todayTips.toFixed(2)}</span>
                 <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '2px'}}>
                   Cash: ${cashTips.toFixed(2)} | Card: ${cardTips.toFixed(2)}
+                </div>
+                <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '6px', borderTop: '1px dashed var(--border-color)', paddingTop: '6px'}}>
+                  Est. Taxes ({effectiveTaxRate}%): <span style={{color: 'var(--danger-color)'}}>-${todayTaxes.toFixed(2)}</span>
+                  <span style={{margin: '0 8px', color: 'var(--border-color)'}}>|</span>
+                  <strong>True Net: <span style={{color: 'var(--success-color)'}}>${todayTrueNet.toFixed(2)}</span></strong>
                 </div>
               </div>
             </div>

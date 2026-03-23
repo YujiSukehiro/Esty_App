@@ -44,6 +44,9 @@ export default function ReportsView() {
     totalNet,
     afterTaxNet,
     effectiveTaxRate,
+    expectedCheckGross,
+    expectedCheckNet,
+    payFrequency,
     businessShare,
     totalTips,
     cashTips,
@@ -57,13 +60,15 @@ export default function ReportsView() {
     effectivePrevMonth
   } = useMemo(() => {
     if (!dailyLogs || !sessions || !settings) return {
-      totalGross: 0, totalNet: 0, afterTaxNet: 0, effectiveTaxRate: 25, businessShare: 0, totalTips: 0, cashTips: 0, cardTips: 0, totalSessions: 0,
+      totalGross: 0, totalNet: 0, afterTaxNet: 0, effectiveTaxRate: 25, expectedCheckGross: 0, expectedCheckNet: 0, payFrequency: 'Bi-Weekly',
+      businessShare: 0, totalTips: 0, cashTips: 0, cardTips: 0, totalSessions: 0,
       serviceDistribution: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null,
       availableMonths: [], effectivePrevMonth: ''
     };
 
     const finModel = settings.find(s => s.key === 'financialModel')?.value || 'Commission';
     const commPct = settings.find(s => s.key === 'commissionPercentage')?.value || 50;
+    const payFreq = settings.find(s => s.key === 'payFrequency')?.value || 'Bi-Weekly';
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -151,14 +156,25 @@ export default function ReportsView() {
         bizCut = rev - estyCut;
       }
 
-      net += (estyCut + tip);
-      bizShare += bizCut;
-
-      // Group for MoM logic
+      // Group for MoM logic, only add to main KPIs if it's the current month
+      const sDate = new Date(s.dateStr);
       if (activeTab === 'Month-over-Month') {
-        const d = new Date(s.dateStr);
-        if (d.getMonth() === currentMonth) currentMoMGross += rev;
-        else prevMoMGross += rev;
+        if (sDate.getMonth() === currentMonth) {
+          currentMoMGross += rev;
+          net += (estyCut + tip);
+          bizShare += bizCut;
+          gross += rev;
+          tips += tip;
+          if (s.tipType === 'Cash') cashT += tip; else cardT += tip;
+        } else {
+          prevMoMGross += rev;
+        }
+      } else {
+        net += (estyCut + tip);
+        bizShare += bizCut;
+        gross += rev;
+        tips += tip;
+        if (s.tipType === 'Cash') cashT += tip; else cardT += tip;
       }
     });
 
@@ -241,6 +257,24 @@ export default function ReportsView() {
     const taxAmount = net * (effectiveTaxRate / 100);
     const afterTaxNet = net - taxAmount;
 
+    // Calculate Paycheck Size
+    let monthsInPeriod = 1;
+    if (activeTab === 'YTD') {
+      monthsInPeriod = Math.max(1, currentMonth + (now.getDate() / 30));
+    } else if (activeTab === 'Previous Years') {
+      const uniqueMonths = new Set(relevantSessions.map(s => s.dateStr.substring(0, 7)));
+      monthsInPeriod = Math.max(1, uniqueMonths.size);
+    }
+    
+    let periodsPerMonth = 2.16; // default Bi-Weekly
+    if (payFreq === 'Weekly') periodsPerMonth = 4.33;
+    if (payFreq === 'Semi-Monthly') periodsPerMonth = 2.0;
+    if (payFreq === 'Monthly') periodsPerMonth = 1.0;
+    
+    const totalPayPeriods = Math.max(1, monthsInPeriod * periodsPerMonth);
+    const expectedCheckGross = net / totalPayPeriods;
+    const expectedCheckNet = afterTaxNet / totalPayPeriods;
+
     let previousData = null;
     if (activeTab === 'Month-over-Month') {
       previousData = {
@@ -255,6 +289,9 @@ export default function ReportsView() {
       totalNet: net,
       afterTaxNet: afterTaxNet,
       effectiveTaxRate: effectiveTaxRate,
+      expectedCheckGross: expectedCheckGross,
+      expectedCheckNet: expectedCheckNet,
+      payFrequency: payFreq,
       businessShare: bizShare,
       totalTips: tips,
       cashTips: cashT,
@@ -351,17 +388,29 @@ export default function ReportsView() {
             Cash: ${cashTips.toFixed(2)} <span style={{margin:'0 4px', color:'var(--border-color)'}}>|</span> Card: ${cardTips.toFixed(2)}
           </div>
         </div>
+        
         <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Your Net Earnings</div>
-          <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--success-color)'}}>${totalNet.toFixed(2)}</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>True Post-Tax Net</div>
+          <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--success-color)'}}>${afterTaxNet.toFixed(2)}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>
-            Post-Tax Net (estimated at {effectiveTaxRate}%): <strong style={{color: 'var(--text-color)'}}>${afterTaxNet.toFixed(2)}</strong>
+            Taxes deducted at {effectiveTaxRate}% (${(totalNet - afterTaxNet).toFixed(2)})
           </div>
         </div>
         <div className="card" style={{padding: '16px', borderLeft: '4px solid var(--danger-color)'}}>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Business Share</div>
           <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--danger-color)'}}>${businessShare.toFixed(2)}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>What she's making the company</div>
+        </div>
+
+        <div className="card" style={{padding: '16px', gridColumn: '1 / -1', background: 'var(--card-bg)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div>
+            <div style={{fontSize: '0.875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Est. Expected Paycheck</div>
+            <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>Based on <strong style={{color:'var(--text-color)'}}>{payFrequency}</strong> payouts for {activeTab}</div>
+          </div>
+          <div style={{textAlign: 'right'}}>
+            <div style={{fontSize: '1.5rem', fontWeight: 800, color: 'var(--success-color)'}}>${expectedCheckNet.toFixed(2)} <span style={{fontSize:'0.875rem', fontWeight:400, color:'var(--text-secondary)'}}>net</span></div>
+            <div style={{fontSize: '0.875rem', color: 'var(--text-secondary)'}}>${expectedCheckGross.toFixed(2)} gross</div>
+          </div>
         </div>
       </div>
 

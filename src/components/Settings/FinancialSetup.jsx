@@ -9,6 +9,7 @@ export default function FinancialSetup() {
   const [monthlyRent, setMonthlyRent] = useState(0);
   const [workingDays, setWorkingDays] = useState(20);
   const [taxRate, setTaxRate] = useState(25); // Default 25%
+  const [payFreq, setPayFreq] = useState('Bi-Weekly'); // Weekly, Bi-Weekly, Semi-Monthly, Monthly
 
   useEffect(() => {
     if (settings) {
@@ -22,6 +23,8 @@ export default function FinancialSetup() {
       if (wd) setWorkingDays(wd);
       const tr = settings.find(s => s.key === 'estimatedTaxRate')?.value;
       if (tr !== undefined) setTaxRate(tr);
+      const pf = settings.find(s => s.key === 'payFrequency')?.value;
+      if (pf) setPayFreq(pf);
     }
   }, [settings]);
 
@@ -31,7 +34,8 @@ export default function FinancialSetup() {
       { key: 'commissionPercentage', value: Number(commissionPct) },
       { key: 'monthlyRent', value: Number(monthlyRent) },
       { key: 'workingDaysPerMonth', value: Number(workingDays) },
-      { key: 'estimatedTaxRate', value: Number(taxRate) }
+      { key: 'estimatedTaxRate', value: Number(taxRate) },
+      { key: 'payFrequency', value: payFreq }
     ]);
     alert('Financial Settings Saved Successfully!');
   };
@@ -91,6 +95,21 @@ export default function FinancialSetup() {
       )}
 
       <div className="input-group" style={{marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px'}}>
+        <label>Expected Pay Frequency</label>
+        <p style={{fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 8px 0'}}>Used to calculate your projected paycheck size.</p>
+        <select 
+          className="input-field" 
+          value={payFreq} 
+          onChange={e => setPayFreq(e.target.value)}
+        >
+          <option value="Weekly">Weekly (Every week)</option>
+          <option value="Bi-Weekly">Bi-Weekly (Every 2 weeks)</option>
+          <option value="Semi-Monthly">Semi-Monthly (1st & 15th)</option>
+          <option value="Monthly">Monthly (Once a month)</option>
+        </select>
+      </div>
+
+      <div className="input-group" style={{marginTop: '16px'}}>
         <label>Estimated Tax Bracket (%)</label>
         <p style={{fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 8px 0'}}>Used to calculate your true post-tax take home on the Reports dashboard.</p>
         <input 
