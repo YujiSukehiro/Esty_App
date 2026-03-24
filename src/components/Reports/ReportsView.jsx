@@ -69,7 +69,7 @@ export default function ReportsView() {
       totalGross: 0, totalNet: 0, afterTaxNet: 0, effectiveTaxRate: 25, expectedCheckGross: 0, expectedCheckNet: 0, payFrequency: 'Bi-Weekly',
       businessShare: 0, totalTips: 0, cashTips: 0, cardTips: 0, totalSessions: 0,
       serviceDistribution: {}, serviceStats: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null,
-      availableMonths: [], effectivePrevMonth: ''
+      availableMonths: [], effectivePrevMonth: '', totalCOGS: 0, rentOverhead: 0
     };
 
     const finModel = settings.find(s => s.key === 'financialModel')?.value || 'Commission';
