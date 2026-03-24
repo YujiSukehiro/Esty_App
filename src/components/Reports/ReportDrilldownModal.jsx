@@ -144,26 +144,38 @@ export default function ReportDrilldownModal({ isOpen, onClose, metricType, stat
   };
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={onClose}>
       <style>{`
         .modal-overlay {
           position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0,0,0,0.5); display: flex; align-items: center; justifyContent: center;
-          z-index: 1000; padding: 16px; backdrop-filter: blur(2px);
+          background: rgba(15, 23, 42, 0.4); 
+          display: flex; align-items: center; justify-content: center;
+          z-index: 9999; padding: 16px; backdrop-filter: blur(4px);
         }
-        .modal-content {
-          background: var(--card-bg); width: 100%; max-width: 500px;
-          border-radius: 16px; padding: 24px; box-shadow: var(--shadow-xl);
-          max-height: 90vh; overflow-y: auto; position: relative;
+        .modal-content-custom {
+          width: 100%; max-width: 500px;
+          max-height: 85vh; overflow-y: auto; position: relative;
+          background: var(--surface-opaque); 
+          border-radius: var(--radius-xl);
+          padding: 24px;
+          box-shadow: var(--shadow-xl);
+          border: 1px solid var(--border-highlight);
         }
-        .drilldown-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        .drilldown-table th { border-bottom: 2px solid var(--border-color); padding: 12px 0; text-align: left; color: var(--text-secondary); }
-        .drilldown-table td { border-bottom: 1px solid var(--border-color); padding: 12px 0; }
-        .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-secondary); cursor: pointer; }
+        .drilldown-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-top: 16px; }
+        .drilldown-table th { border-bottom: 2px solid var(--border-color); padding: 12px 4px; text-align: left; color: var(--text-secondary); font-weight: 600; }
+        .drilldown-table td { border-bottom: 1px solid var(--border-color); padding: 12px 4px; }
+        .close-btn { 
+          position: absolute; top: 16px; right: 16px; 
+          background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-secondary); 
+          cursor: pointer; border-radius: 50%; width: 32px; height: 32px;
+          display: flex; align-items: center; justify-content: center;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .close-btn:hover { background: var(--danger-bg); color: var(--danger-color); border-color: transparent; transform: scale(1.1); }
       `}</style>
-      <div className="modal-content">
-        <button className="close-btn" onClick={onClose}><X size={24} /></button>
-        <h2 style={{marginTop: 0, fontSize: '1.25rem', marginBottom: '8px'}}>{getTitle()}</h2>
+      <div className="modal-content-custom" onClick={e => e.stopPropagation()}>
+        <button className="close-btn" onClick={onClose} aria-label="Close modal"><X size={18} /></button>
+        <h2 style={{marginTop: 0, fontSize: '1.25rem', marginBottom: '8px', paddingRight: '40px'}}>{getTitle()}</h2>
         {renderContent()}
       </div>
     </div>
