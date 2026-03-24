@@ -32,6 +32,29 @@ export default function ReportDrilldownModal({ isOpen, onClose, metricType, stat
             </table>
           </>
         );
+      case 'COSTS':
+        return (
+          <>
+            <p style={{color: 'var(--text-secondary)', marginBottom: '16px'}}>Breakdown of material and supply expenses driving your <strong>${stats.totalCOGS.toFixed(2)}</strong> Total Service Costs.</p>
+            <table className="drilldown-table">
+              <thead><tr><th>Service</th><th style={{textAlign:'center'}}>Count</th><th style={{textAlign:'right'}}>Avg Cost</th><th style={{textAlign:'right'}}>Total Cost</th></tr></thead>
+              <tbody>
+                {sortedServices.filter(([, d]) => d.cogs > 0).map(([name, data]) => (
+                  <tr key={name}>
+                    <td>{name}</td>
+                    <td style={{textAlign:'center'}}>{data.count}</td>
+                    <td style={{textAlign:'right', color: 'var(--text-secondary)'}}>${(data.cogs / data.count).toFixed(2)}</td>
+                    <td style={{textAlign:'right', fontWeight:600, color: 'var(--danger-color)'}}>${data.cogs.toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr style={{borderTop: '2px solid var(--border-color)', fontWeight: 800}}>
+                  <td colSpan="3">Total Service Costs</td>
+                  <td style={{textAlign:'right', color: 'var(--danger-color)'}}>${stats.totalCOGS.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </>
+        );
       case 'NET':
         return (
           <>
@@ -139,6 +162,7 @@ export default function ReportDrilldownModal({ isOpen, onClose, metricType, stat
   const getTitle = () => {
     switch(metricType) {
       case 'GROSS': return 'Gross Revenue Details';
+      case 'COSTS': return 'Cost of Goods Breakdown';
       case 'NET': return 'True Net Profit Math';
       case 'TIPS': return 'Tips Breakdown';
       case 'BUSINESS_SHARE': return 'Business Share Details';

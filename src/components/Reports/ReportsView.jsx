@@ -428,6 +428,15 @@ export default function ReportsView() {
           </div>
           <div style={{fontSize: '1.5rem', fontWeight: 700}}>${totalGross.toFixed(2)}</div>
         </div>
+        
+        <div className="card" style={{padding: '16px', cursor: 'pointer', transition: 'transform 0.1s', border: '1px solid transparent'}} onClick={() => setActiveDrilldown('COSTS')} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--danger-color)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Service Costs</div>
+            <div style={{fontSize: '0.7rem', color: 'var(--danger-color)'}}>Tap for info</div>
+          </div>
+          <div style={{fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger-color)'}}>${totalCOGS.toFixed(2)}</div>
+          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>Material & Product Expense</div>
+        </div>
         <div className="card" style={{padding: '16px', cursor: 'pointer', transition: 'transform 0.1s', border: '1px solid transparent'}} onClick={() => setActiveDrilldown('TIPS')} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--success-color)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
           <div style={{display: 'flex', justifyContent: 'space-between'}}>
             <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Tips</div>
