@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db';
+import ReportDrilldownModal from './ReportDrilldownModal';
 
 import {
   Chart as ChartJS,
@@ -33,6 +34,7 @@ ChartJS.register(
 export default function ReportsView() {
   const [activeTab, setActiveTab] = useState('Current Month'); // Current Month, Month-over-Month, Previous Months, YTD, Previous Years
   const [selectedPrevMonth, setSelectedPrevMonth] = useState('');
+  const [activeDrilldown, setActiveDrilldown] = useState(null);
   
   const dailyLogs = useLiveQuery(() => db.dailyLogs.toArray());
   const sessions = useLiveQuery(() => db.sessions.toArray());
@@ -56,6 +58,7 @@ export default function ReportsView() {
     cardTips,
     totalSessions,
     serviceDistribution,
+    serviceStats,
     lineChartTemplate,
     barChartTemplate,
     previousMoM,
@@ -65,7 +68,7 @@ export default function ReportsView() {
     if (!dailyLogs || !sessions || !settings) return {
       totalGross: 0, totalNet: 0, afterTaxNet: 0, effectiveTaxRate: 25, expectedCheckGross: 0, expectedCheckNet: 0, payFrequency: 'Bi-Weekly',
       businessShare: 0, totalTips: 0, cashTips: 0, cardTips: 0, totalSessions: 0,
-      serviceDistribution: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null,
+      serviceDistribution: {}, serviceStats: {}, lineChartTemplate: null, barChartTemplate: null, previousMoM: null,
       availableMonths: [], effectivePrevMonth: ''
     };
 
@@ -132,11 +135,17 @@ export default function ReportsView() {
     let prevMoMGross = 0;
 
     const distribution = {};
+    const serviceStatsObj = {};
 
     relevantSessions.forEach(s => {
       const svc = serviceCatalog?.find(cat => cat.id === s.serviceId);
       const sName = svc ? svc.serviceName : 'Custom Service';
       distribution[sName] = (distribution[sName] || 0) + 1;
+
+      if (!serviceStatsObj[sName]) {
+        serviceStatsObj[sName] = { count: 0, revenue: 0, cogs: 0, estyCut: 0, bizCut: 0, tips: 0 };
+      }
+      serviceStatsObj[sName].count += 1;
 
       const rev = s.customRevenue || 0;
       const tip = s.tipAmount || 0;
@@ -170,6 +179,12 @@ export default function ReportsView() {
         estyCut = rev * (commPct / 100);
         bizCut = rev - estyCut - sessionCOGS; // Business eats the material cost
       }
+
+      serviceStatsObj[sName].revenue += rev;
+      serviceStatsObj[sName].tips += tip;
+      serviceStatsObj[sName].cogs += sessionCOGS;
+      serviceStatsObj[sName].estyCut += estyCut;
+      serviceStatsObj[sName].bizCut += bizCut;
 
       // Group for MoM logic, only add to main KPIs if it's the current month
       const sDate = new Date(s.dateStr);
@@ -327,6 +342,7 @@ export default function ReportsView() {
       cardTips: cardT,
       totalSessions: relevantSessions.length,
       serviceDistribution: distribution,
+      serviceStats: serviceStatsObj,
       lineChartTemplate: lineTemplate,
       barChartTemplate: barTemplate,
       previousMoM: previousData,
@@ -372,7 +388,6 @@ export default function ReportsView() {
             style={{
               padding: '8px 16px', 
               borderRadius: '20px', 
-              border: 'none', 
               background: activeTab === tab ? 'var(--primary-color)' : 'var(--bg-color)',
               color: activeTab === tab ? 'white' : 'var(--text-color)',
               fontWeight: 600,
@@ -406,20 +421,29 @@ export default function ReportsView() {
 
       {/* KPI Cards */}
       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px'}}>
-        <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Gross Revenue</div>
+        <div className="card" style={{padding: '16px', cursor: 'pointer', transition: 'transform 0.1s', border: '1px solid transparent'}} onClick={() => setActiveDrilldown('GROSS')} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary-color)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Gross Revenue</div>
+            <div style={{fontSize: '0.7rem', color: 'var(--primary-color)'}}>Tap for info</div>
+          </div>
           <div style={{fontSize: '1.5rem', fontWeight: 700}}>${totalGross.toFixed(2)}</div>
         </div>
-        <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Tips</div>
+        <div className="card" style={{padding: '16px', cursor: 'pointer', transition: 'transform 0.1s', border: '1px solid transparent'}} onClick={() => setActiveDrilldown('TIPS')} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--success-color)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Total Tips</div>
+            <div style={{fontSize: '0.7rem', color: 'var(--success-color)'}}>Tap for info</div>
+          </div>
           <div style={{fontSize: '1.5rem', fontWeight: 800, color: 'var(--success-color)'}}>${totalTips.toFixed(2)}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>
             Cash: ${cashTips.toFixed(2)} <span style={{margin:'0 4px', color:'var(--border-color)'}}>|</span> Card: ${cardTips.toFixed(2)}
           </div>
         </div>
         
-        <div className="card" style={{padding: '16px'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>True Post-Tax Net</div>
+        <div className="card" style={{padding: '16px', cursor: 'pointer', transition: 'transform 0.1s', border: '1px solid transparent'}} onClick={() => setActiveDrilldown('NET')} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--success-color)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>True Post-Tax Net</div>
+            <div style={{fontSize: '0.7rem', color: 'var(--success-color)'}}>Tap for math</div>
+          </div>
           <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--success-color)'}}>${afterTaxNet.toFixed(2)}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>
             Taxes deducted at {effectiveTaxRate}% (${(totalNet - afterTaxNet).toFixed(2)})
@@ -432,8 +456,11 @@ export default function ReportsView() {
             </div>
           )}
         </div>
-        <div className="card" style={{padding: '16px', borderLeft: '4px solid var(--danger-color)'}}>
-          <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Business Share</div>
+        <div className="card" style={{padding: '16px', borderLeft: '4px solid var(--danger-color)', cursor: 'pointer', transition: 'transform 0.1s', borderRight: '1px solid transparent', borderTop: '1px solid transparent', borderBottom: '1px solid transparent'}} onClick={() => setActiveDrilldown('BUSINESS_SHARE')} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--danger-color)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Business Share</div>
+            <div style={{fontSize: '0.7rem', color: 'var(--danger-color)'}}>Tap for info</div>
+          </div>
           <div style={{fontSize: '1.75rem', fontWeight: 800, color: 'var(--danger-color)'}}>${businessShare.toFixed(2)}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>What she's making the company</div>
         </div>
@@ -497,16 +524,26 @@ export default function ReportsView() {
             </div>
           </div>
 
-          <div className="card" style={{padding: '16px', marginBottom: '32px'}}>
-            <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px'}}>Exact Service Counts for this Period</h3>
-            <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem'}}>
+          <div className="card" style={{padding: '16px', marginBottom: '32px', overflowX: 'auto'}}>
+            <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '16px'}}>Service Profitability Breakdown</h3>
+            <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', minWidth: '400px'}}>
+              <thead>
+                <tr>
+                  <th style={{padding: '8px 0', textAlign: 'left', borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)'}}>Service</th>
+                  <th style={{padding: '8px 0', textAlign: 'center', borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)'}}>Count</th>
+                  <th style={{padding: '8px 0', textAlign: 'right', borderBottom: '2px solid var(--border-color)', color: 'var(--danger-color)'}}>Tot. Cost (COGS)</th>
+                  <th style={{padding: '8px 0', textAlign: 'right', borderBottom: '2px solid var(--border-color)', color: 'var(--success-color)'}}>Pre-Tax Profit</th>
+                </tr>
+              </thead>
               <tbody>
-                {Object.entries(serviceDistribution)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([name, count], i) => (
+                {Object.entries(serviceStats)
+                  .sort((a, b) => (b[1].estyCut + b[1].tips) - (a[1].estyCut + a[1].tips))
+                  .map(([name, data], i) => (
                   <tr key={i} style={{borderBottom: '1px solid var(--border-color)'}}>
                     <td style={{padding: '12px 0', fontWeight: 500}}>{name}</td>
-                    <td style={{padding: '12px 0', textAlign: 'right', color: 'var(--text-secondary)'}}>{count} services</td>
+                    <td style={{padding: '12px 0', textAlign: 'center', color: 'var(--text-secondary)'}}>{data.count}</td>
+                    <td style={{padding: '12px 0', textAlign: 'right', color: 'var(--danger-color)'}}>{data.cogs > 0 ? `-$${data.cogs.toFixed(2)}` : '$0.00'}</td>
+                    <td style={{padding: '12px 0', textAlign: 'right', color: 'var(--success-color)', fontWeight: 600}}>${(data.estyCut + data.tips).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -518,6 +555,19 @@ export default function ReportsView() {
           <p>No valid data for this period.</p>
         </div>
       )}
+
+      <ReportDrilldownModal 
+        isOpen={!!activeDrilldown} 
+        onClose={() => setActiveDrilldown(null)}
+        metricType={activeDrilldown}
+        stats={{
+          totalGross, totalNet, totalCOGS, afterTaxNet, businessShare, 
+          totalTips, cashTips, cardTips, serviceStats
+        }}
+        finModel={settings?.find(s => s.key === 'financialModel')?.value || 'Commission'}
+        taxRate={effectiveTaxRate}
+        rentOverhead={rentOverhead}
+      />
 
     </div>
   );

@@ -11,11 +11,11 @@ export default function BackupManager() {
       for (const table of db.tables) {
         data[table.name] = await table.toArray();
       }
-      
+
       const jsonStr = JSON.stringify(data, null, 2);
       const blob = new Blob([jsonStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      
+
       const a = document.createElement('a');
       a.href = url;
       a.download = `EstyApp_Backup_${new Date().toISOString().split('T')[0]}.json`;
@@ -44,11 +44,8 @@ export default function BackupManager() {
       const data = JSON.parse(text);
 
       await db.transaction('rw', db.tables, async () => {
-        const importKeys = Object.keys(data);
-        for (const tableName of importKeys) {
-          if (db[tableName]) {
-            await db[tableName].clear();
-          }
+        for (const table of db.tables) {
+          await table.clear();
         }
         for (const tableName of Object.keys(data)) {
           if (db[tableName]) {
@@ -68,20 +65,20 @@ export default function BackupManager() {
   };
 
   return (
-    <div className="card" style={{borderColor: 'var(--danger-color)'}}>
-      <h2 style={{marginTop: 0, fontSize: '1.25rem', color: 'var(--danger-color)'}}>Data Failsafe & Backup</h2>
-      <p style={{color: 'var(--text-secondary)', fontSize: '0.875rem'}}>
+    <div className="card" style={{ borderColor: 'var(--danger-color)' }}>
+      <h2 style={{ marginTop: 0, fontSize: '1.25rem', color: 'var(--danger-color)' }}>Data Failsafe & Backup</h2>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
         Since this app stores data physically on your device, you MUST periodically export backups to iCloud or a hard drive.
       </p>
-      
-      <div style={{display: 'flex', gap: '12px', marginTop: '16px'}}>
-        <button className="btn btn-primary" style={{flex: 1, backgroundColor: 'var(--danger-color)'}} onClick={exportData}>
+
+      <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+        <button className="btn btn-primary" style={{ flex: 1, backgroundColor: 'var(--danger-color)' }} onClick={exportData}>
           <Download size={18} /> Export JSON
         </button>
 
-        <label className="btn btn-secondary" style={{flex: 1, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', opacity: importing ? 0.5 : 1}}>
+        <label className="btn btn-secondary" style={{ flex: 1, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', opacity: importing ? 0.5 : 1 }}>
           <UploadCloud size={18} /> {importing ? 'Importing...' : 'Restore JSON'}
-          <input type="file" accept=".json" style={{display: 'none'}} onChange={importData} disabled={importing} />
+          <input type="file" accept=".json" style={{ display: 'none' }} onChange={importData} disabled={importing} />
         </label>
       </div>
     </div>
