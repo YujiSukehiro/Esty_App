@@ -85,12 +85,14 @@ export default function ReportDrilldownModal({ isOpen, onClose, metricType, stat
           <>
              <p style={{color: 'var(--text-secondary)', marginBottom: '16px'}}>Breakdown of tips collected across services.</p>
              <table className="drilldown-table" style={{marginBottom: '24px'}}>
-              <thead><tr><th>Service</th><th style={{textAlign:'right'}}>Total Tips</th></tr></thead>
+              <thead><tr><th>Service</th><th style={{textAlign:'center'}}>Count</th><th style={{textAlign:'right'}}>Avg Tip</th><th style={{textAlign:'right'}}>Total Tips</th></tr></thead>
               <tbody>
                 {sortedServices.filter(([, d]) => d.tips > 0).map(([name, data]) => (
                   <tr key={name}>
                     <td>{name}</td>
-                    <td style={{textAlign:'right'}}>${data.tips.toFixed(2)}</td>
+                    <td style={{textAlign:'center'}}>{data.count}</td>
+                    <td style={{textAlign:'right', color: 'var(--text-secondary)'}}>${(data.tips / data.count).toFixed(2)}</td>
+                    <td style={{textAlign:'right', fontWeight: 600, color: 'var(--success-color)'}}>${data.tips.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -107,16 +109,17 @@ export default function ReportDrilldownModal({ isOpen, onClose, metricType, stat
           <>
              <p style={{color: 'var(--text-secondary)', marginBottom: '16px'}}>Breakdown of what the business retains after your commission and material costs.</p>
              <table className="drilldown-table">
-              <thead><tr><th>Service</th><th style={{textAlign:'right'}}>Business Cut</th></tr></thead>
+              <thead><tr><th>Service</th><th style={{textAlign:'center'}}>Count</th><th style={{textAlign:'right'}}>Business Cut</th></tr></thead>
               <tbody>
                 {sortedServices.filter(([, d]) => d.bizCut > 0).map(([name, data]) => (
                   <tr key={name}>
                     <td>{name}</td>
+                    <td style={{textAlign:'center'}}>{data.count}</td>
                     <td style={{textAlign:'right'}}>${data.bizCut.toFixed(2)}</td>
                   </tr>
                 ))}
                 <tr style={{borderTop: '2px solid var(--border-color)', fontWeight: 800}}>
-                  <td>Total Business Share</td>
+                  <td colSpan="2">Total Business Share</td>
                   <td style={{textAlign:'right', color: 'var(--danger-color)'}}>${stats.businessShare.toFixed(2)}</td>
                 </tr>
               </tbody>
